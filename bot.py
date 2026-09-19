@@ -21,12 +21,20 @@ DATA_FILE= "reminders.json"
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
+@bot.event
+async def setup_hook():
+    guild = discord.Object(id=GUILD_ID)
+    bot.tree.copy_global_to(guild=guild)
+    await bot.tree.sync(guild=guild)
+    print("Hook ok")
+
 #data handler----------------------------
 
 def load_reminders(): #load data from json file
     if os.path.exists(DATA_FILE): #data file existance verification
         with open(DATA_FILE, "r", encoding="utf-8") as f: #opening file on read only mode
             return json.load(f) #load data
+    print("load_reminders OK")
     return [] #return data
 
 def save_reminders(reminders): #save data in json file
@@ -37,6 +45,7 @@ def save_reminders(reminders): #save data in json file
 
 @tasks.loop(seconds=30) #repeating every 30 seconds
 async def check_reminders(): #async methode -> verification of time to notify a task
+    print("check_reminders_running -------")
     now = datetime.now() 
     channel = bot.get_channel(REMINDER_CHANNEL_ID) #notification doscord channel
     if channel is None: #if null return
@@ -69,9 +78,8 @@ async def before_check_reminders():
 
 @bot.event
 async def on_ready():# async methode -> connecting bot
-    # if not check_reminders.is_start(): #run only if service is offline
-    check_reminders.start() #start reminder_check methode
-    await bot.tree.sync() #waiting for bot to start
+    if not check_reminders.is_running(): #run only if service is offline
+        check_reminders.start()
     print(f"Connecté en tant que {bot.user}") #connected logs
 
 #bot commands-----------------------------
@@ -127,6 +135,7 @@ def compute_next_run(weekday, hour, minute): #return date of the next notificati
 
 @bot.tree.command(name="liste_rappels", description="Voir les rappels") #command to see the list of reminders
 async def liste_rappels(interaction: discord.Interaction): #async methode -> print list of reminders
+    print("list launch")
     reminders = load_reminders() #load data from file
     if not reminders: #if null
         await interaction.response.send_message("Aucun rappel enregistré.", ephemeral=True) #send discord message
