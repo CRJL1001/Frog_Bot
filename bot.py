@@ -10,16 +10,16 @@ from dotenv import load_dotenv
 COMMAND_PREFIX="!"
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-GUILD_ID = os.getenv("GUILD_ID")
-REMINDER_CHANNEL_ID = os.getenv("REMINDER_CHANNEL_ID")
-CREATE_CHANNEL_ID = os.getenv("CREATE_CHANNEL_ID")
+GUILD_ID = int(os.getenv("GUILD_ID"))
+REMINDER_CHANNEL_ID = int(os.getenv("REMINDER_CHANNEL_ID"))
+CREATE_CHANNEL_ID = int(os.getenv("CREATE_CHANNEL_ID"))
 DAYS=["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 #bot initialisation-------------------
 DATA_FILE= "reminders.json"
 
 intents = discord.Intents.default()
-bot = commands.bot(command_prefix=COMMAND_PREFIX, intents=intents)
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
 #data handler----------------------------
 
@@ -55,12 +55,18 @@ async def check_reminders(): #async methode -> verification of time to notify a 
                 embed.add_field(name="Responsable", value=f"<@{r['assigned_to']}>") #add people field
             await channel.send(embed=embed) #sending message and awaiting for success response
 
+            r["next_run"]
+
     save_reminders(reminders) #saving json data
 
-@bot.event
+@check_reminders.before_loop #waiting before loop that the bot is ready
+async def before_check_reminders():
+    await bot.wait_until_ready()
 
+@bot.event
 async def on_ready():# async methode -> connecting bot
-    check_reminders.start() #start reminder_check methode
+    if not check_reminders.is_start(): #run only if service is offline
+        check_reminders.start() #start reminder_check methode
     await bot.tree.sync() #waiting for bot to start
     print(f"Connecté en tant que {bot.user}") #connected logs
 
@@ -123,11 +129,11 @@ async def liste_rappels(interaction: discord.Interaction): #async methode -> pri
         return
     embed = discord.Embed(title="Rappels de tâches", color=discord.Color.blue()) #discord base message
     for r in sorted(reminders, key=lambda x: x["next_run"]): #for all reminders
-        who = f" - <@{r['assigned_to']}>" if r['assinged_to'] else "" #assigned person field
+        who = f" - <@{r['assigned_to']}>" if r['assigned_to'] else "" #assigned person field
         embed.add_field( #adding infos fields
             name=f"#{r['id']} * {r['name']}",
             value=f"{DAYS[r["weekday"]]} à {r['hour']:02d}:{r['minute']:02d}{who}",
-            inlin=False
+            inline=False
         )
     await interaction.response.send_message(embed=embed) #await for the message to be send in discord
 
