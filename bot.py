@@ -19,14 +19,24 @@ DAYS=["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 DATA_FILE= "reminders.json"
 
 intents = discord.Intents.default()
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
-@bot.event
-async def setup_hook():
-    guild = discord.Object(id=GUILD_ID)
-    bot.tree.copy_global_to(guild=guild)
-    await bot.tree.sync(guild=guild)
-    print("Hook ok")
+class FrogBot(commands.Bot): #class of the bot
+    async def setup_hook(self): #hook to load commands in the bot
+        guild = discord.Object(id=GUILD_ID) #serveur
+
+        self.tree.copy_global_to(guild=guild) #params
+        commands = await self.tree.sync(guild=guild) #synchro commands
+
+        print("Commandes synchronisées :")
+        for command in commands: #display commands hooked 
+            print(f"    - {command.name}")
+
+
+bot = FrogBot( #creating instance of the bot
+    command_prefix=COMMAND_PREFIX,
+    intents=intents
+)
+
 
 #data handler----------------------------
 
@@ -45,10 +55,10 @@ def save_reminders(reminders): #save data in json file
 
 @tasks.loop(seconds=30) #repeating every 30 seconds
 async def check_reminders(): #async methode -> verification of time to notify a task
-    print("check_reminders_running -------")
+    print(f"->Reminders for now notified at {str(datetime.now())}")
     now = datetime.now() 
-    channel = bot.get_channel(REMINDER_CHANNEL_ID) #notification doscord channel
-    if channel is None: #if null return
+    reminder_channel = bot.get_channel(REMINDER_CHANNEL_ID) #notification doscord channel
+    if reminder_channel is None: #if null return
         return
 
     reminders = load_reminders() #methode to load data
@@ -62,7 +72,7 @@ async def check_reminders(): #async methode -> verification of time to notify a 
             )
             if r.get("assigned_to"): #if assigned to somebody
                 embed.add_field(name="Responsable", value=f"<@{r['assigned_to']}>") #add people field
-            await channel.send(embed=embed) #sending message and awaiting for success response
+            await reminder_channel.send(embed=embed) #sending message and awaiting for success response
 
             r["next_run"] = compute_next_run(
                 r['weekday'],
@@ -122,7 +132,7 @@ async def ajouter_rappel(interaction: discord.Interaction, nom: str, jour: app_c
     save_reminders(reminders) #saving to file
 
     await interaction.response.send_message( #confirmation discord message
-        f"Rappel **{nom}** créé: tous les **{jour.name}** à **{heure}**" + (f"pour {responsable.mention}" if responsable else "")
+        f"Rappel **{nom}** créé: tous les **{jour.name}** à **{heure}**" + (f" pour {responsable.mention}" if responsable else "")
     )
 
 def compute_next_run(weekday, hour, minute): #return date of the next notification + 1 week
@@ -135,7 +145,7 @@ def compute_next_run(weekday, hour, minute): #return date of the next notificati
 
 @bot.tree.command(name="liste_rappels", description="Voir les rappels") #command to see the list of reminders
 async def liste_rappels(interaction: discord.Interaction): #async methode -> print list of reminders
-    print("list launch")
+    print("list index")
     reminders = load_reminders() #load data from file
     if not reminders: #if null
         await interaction.response.send_message("Aucun rappel enregistré.", ephemeral=True) #send discord message
@@ -151,20 +161,37 @@ async def liste_rappels(interaction: discord.Interaction): #async methode -> pri
     await interaction.response.send_message(embed=embed) #await for the message to be send in discord
 
 
-@bot.tree.command(name="supprimer_rappel", description="Supprimer un rappel par son ID") #command to delete task
-async def supprimer_rappel(interaction: discord.Interaction, id: int): #async methode -> delete task
-    reminders = load_reminders() #loading data from file
-    reminders_new = [r for r in reminders if r['id'] != id] #tab= tab but only elements where id is different of the id to delete 
+@bot.tree.command(
+    name="supprimer_rappel",
+    description="Supprimer un rappel par son ID"
+)
+@app_commands.describe(id="ID du rappel à supprimer")
+async def supprimer_rappel(
+    interaction: discord.Interaction,
+    id: int
+):
+    print(f"Suppression demandée : {id}")
+
+    reminders = load_reminders()
+
+    reminders_new = [
+        r for r in reminders
+        if int(r["id"]) != int(id)
+    ]
 
     if len(reminders_new) == len(reminders):
         await interaction.response.send_message(
-            f"Acun rappel trouvé avec un id = #{id}",
+            f"Aucun rappel trouvé avec l'ID #{id}.",
             ephemeral=True
         )
         return
-    
-    save_reminders(reminders) #saving data into file
-    await interaction.response.send_message(f"Rappel #{id} supprimé.") #discord confirmation message
+
+    save_reminders(reminders_new)
+    print(f"Rappel #{id} supprimé")
+
+    await interaction.response.send_message(
+        f"Rappel #{id} supprimé."
+    )
 
 bot.run(TOKEN) #running the bot 
 
