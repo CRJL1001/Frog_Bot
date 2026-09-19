@@ -13,6 +13,7 @@ TOKEN = os.getenv("TOKEN")
 GUILD_ID = os.getenv("GUILD_ID")
 REMINDER_CHANNEL_ID = os.getenv("REMINDER_CHANNEL_ID")
 CREATE_CHANNEL_ID = os.getenv("CREATE_CHANNEL_ID")
+DAYS=["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 #bot initialisation-------------------
 DATA_FILE= "reminders.json"
@@ -76,7 +77,7 @@ async def on_ready():# async methode -> connecting bot
 
 @app_commands.choices(jour=[ #enumaration for day field
     app_commands.Choice(name=j, value=i) 
-    for i, j in enumerate(["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"])
+    for i, j in enumerate(DAYS)
 ])
 
 async def ajouter_rappel(interaction: discord.Interaction, nom: str, jour: app_commands.Choice[int], heure: str, description: str = None, responsable: discord.Member = None): #async methode -> add reminder
@@ -114,6 +115,18 @@ def compute_next_run(weekday, hour, minute): #return date of the next notificati
         target += timedelta(weeks=1)
     return target
 
+@bot.tree.command(name="liste_rappels", description="Voir les rappels")
+async def liste_rappels(intercation: discord.Interaction):
+    reminders = load_reminders()
+    if not reminders:
+        await intercation.response.send_message("Aucun rappel enregistré.", ephemeral=True)
+        return
+    embed = discord.Embed(title="Rappels de tâches", color=discord.Color.blue())
+    for r in sorted(reminders, key=lambda x: x["next_run"]):
+        who = f" - <@{r['assigned_to']}>" if r['assinged_to'] else ""
+        embed.add_field(
+            name=f"#{r['id']} * {r['name']}",
+        )
 
 
 
