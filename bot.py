@@ -51,11 +51,15 @@ async def check_reminders(): #async methode -> verification of time to notify a 
                 description=f"**{r['name']}**\n{r['description'] or ''}", 
                 color=discord.Color.orange()
             )
-            if r["assigned_to"]: #if assigned to somebody
+            if r.get("assigned_to"): #if assigned to somebody
                 embed.add_field(name="Responsable", value=f"<@{r['assigned_to']}>") #add people field
             await channel.send(embed=embed) #sending message and awaiting for success response
 
-            r["next_run"]
+            r["next_run"] = compute_next_run(
+                r['weekday'],
+                r["hour"],
+                r['minute']
+            ).strftime("%Y-%m-%d %H:%M")
 
     save_reminders(reminders) #saving json data
 
@@ -129,10 +133,10 @@ async def liste_rappels(interaction: discord.Interaction): #async methode -> pri
         return
     embed = discord.Embed(title="Rappels de tâches", color=discord.Color.blue()) #discord base message
     for r in sorted(reminders, key=lambda x: x["next_run"]): #for all reminders
-        who = f" - <@{r['assigned_to']}>" if r['assigned_to'] else "" #assigned person field
+        who = f" - <@{r['assigned_to']}>" if r.get('assigned_to') else "" #assigned person field
         embed.add_field( #adding infos fields
-            name=f"#{r['id']} * {r['name']}",
-            value=f"{DAYS[r["weekday"]]} à {r['hour']:02d}:{r['minute']:02d}{who}",
+            name=f"#{r['id']} - {r['name']}",
+            value=f"{DAYS[r['weekday']]} à {r['hour']:02d}:{r['minute']:02d}{who}",
             inline=False
         )
     await interaction.response.send_message(embed=embed) #await for the message to be send in discord
@@ -141,7 +145,15 @@ async def liste_rappels(interaction: discord.Interaction): #async methode -> pri
 @bot.tree.command(name="supprimer_rappel", description="Supprimer un rappel par son ID") #command to delete task
 async def supprimer_rappel(interaction: discord.Interaction, id: int): #async methode -> delete task
     reminders = load_reminders() #loading data from file
-    reminders = [r for r in reminders if r['id'] != id] #tab= tab but only elements where id is different of the id to delete 
+    reminders_new = [r for r in reminders if r['id'] != id] #tab= tab but only elements where id is different of the id to delete 
+    
+    if len(reminders_new) == len(reminders):
+        await interaction.response.send_message(
+            f"Acun rappel trouvé avec l\'id #{id}"
+            ephemeral=True
+        )
+        return
+    
     save_reminders(reminders) #saving data into file
     await interaction.response.send_message(f"Rappel #{id} supprimé.") #discord confirmation message
 
