@@ -132,10 +132,14 @@ async def liste_rappels(interaction: discord.Interaction): #async methode -> pri
     await interaction.response.send_message(embed=embed) #await for the message to be send in discord
 
 
+@bot.tree.command(name="supprimer_rappel", description="Supprimer un rappel par son ID") #command to delete task
+async def supprimer_rappel(interaction: discord.Interaction, id: int): #async methode -> delete task
+    reminders = load_reminders() #loading data from file
+    reminders = [r for r in reminders if r['id'] != id] #tab= tab but only elements where id is different of the id to delete 
+    save_reminders(reminders) #saving data into file
+    await interaction.response.send_message(f"Rappel #{id} supprimé.") #discord confirmation message
 
-
-
-
+bot.run(TOKEN) #running the bot 
 
 
 
