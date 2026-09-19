@@ -69,8 +69,8 @@ async def before_check_reminders():
 
 @bot.event
 async def on_ready():# async methode -> connecting bot
-    if not check_reminders.is_start(): #run only if service is offline
-        check_reminders.start() #start reminder_check methode
+    # if not check_reminders.is_start(): #run only if service is offline
+    check_reminders.start() #start reminder_check methode
     await bot.tree.sync() #waiting for bot to start
     print(f"Connecté en tant que {bot.user}") #connected logs
 
@@ -146,10 +146,10 @@ async def liste_rappels(interaction: discord.Interaction): #async methode -> pri
 async def supprimer_rappel(interaction: discord.Interaction, id: int): #async methode -> delete task
     reminders = load_reminders() #loading data from file
     reminders_new = [r for r in reminders if r['id'] != id] #tab= tab but only elements where id is different of the id to delete 
-    
+
     if len(reminders_new) == len(reminders):
         await interaction.response.send_message(
-            f"Acun rappel trouvé avec l\'id #{id}"
+            f"Acun rappel trouvé avec un id = #{id}",
             ephemeral=True
         )
         return
