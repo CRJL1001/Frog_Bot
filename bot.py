@@ -115,18 +115,24 @@ def compute_next_run(weekday, hour, minute): #return date of the next notificati
         target += timedelta(weeks=1)
     return target
 
-@bot.tree.command(name="liste_rappels", description="Voir les rappels")
-async def liste_rappels(intercation: discord.Interaction):
-    reminders = load_reminders()
-    if not reminders:
-        await intercation.response.send_message("Aucun rappel enregistré.", ephemeral=True)
+@bot.tree.command(name="liste_rappels", description="Voir les rappels") #command to see the list of reminders
+async def liste_rappels(interaction: discord.Interaction): #async methode -> print list of reminders
+    reminders = load_reminders() #load data from file
+    if not reminders: #if null
+        await interaction.response.send_message("Aucun rappel enregistré.", ephemeral=True) #send discord message
         return
-    embed = discord.Embed(title="Rappels de tâches", color=discord.Color.blue())
-    for r in sorted(reminders, key=lambda x: x["next_run"]):
-        who = f" - <@{r['assigned_to']}>" if r['assinged_to'] else ""
-        embed.add_field(
+    embed = discord.Embed(title="Rappels de tâches", color=discord.Color.blue()) #discord base message
+    for r in sorted(reminders, key=lambda x: x["next_run"]): #for all reminders
+        who = f" - <@{r['assigned_to']}>" if r['assinged_to'] else "" #assigned person field
+        embed.add_field( #adding infos fields
             name=f"#{r['id']} * {r['name']}",
+            value=f"{DAYS[r["weekday"]]} à {r['hour']:02d}:{r['minute']:02d}{who}",
+            inlin=False
         )
+    await interaction.response.send_message(embed=embed) #await for the message to be send in discord
+
+
+
 
 
 
