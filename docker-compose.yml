@@ -3,6 +3,8 @@ services:
     build: .
     container_name: frog-bot
     env_file: .env
+    environment:
+      TZ: Europe/Paris
     restart: unless-stopped
     depends_on:
       postgres:

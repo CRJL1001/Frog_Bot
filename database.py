@@ -24,6 +24,10 @@ async def init_database():
             password=os.getenv("DB_PASSWORD", "botpassword"),
             database=os.getenv("DB_NAME", "frogbot"),
         )
+    print(
+        f"Connexion PostgreSQL établie : {os.getenv('DB_HOST', 'postgres')} / "
+        f"{os.getenv('DB_NAME', 'frogbot')}"
+    )
 
     await pool.execute(
         """
@@ -101,7 +105,7 @@ async def get_reminders():
 
 
 async def create_reminder(name, description, assigned_to, weekday, hour, minute, next_run):
-    return await pool.fetchrow(
+    reminder = await pool.fetchrow(
         """
         INSERT INTO reminders
             (name, description, assigned_to, weekday, hour, minute, next_run)
@@ -116,6 +120,8 @@ async def create_reminder(name, description, assigned_to, weekday, hour, minute,
         minute,
         next_run,
     )
+    print(f"Rappel #{reminder['id']} enregistré dans PostgreSQL")
+    return reminder
 
 
 async def update_next_run(reminder_id, next_run):
