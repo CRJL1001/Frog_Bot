@@ -2,7 +2,7 @@ services:
   frog-bot:
     build: .
     container_name: frog-bot
-    restart: unless-stopped
     env_file: .env
     volumes:
       - ./data:/app/data
+    restart: unless-stopped

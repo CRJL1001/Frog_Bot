@@ -10,3 +10,5 @@ RUN pip install --no-cache-dir -r requirments.txt
 COPY bot.py .
 
 USER botuser
+
+CMD ["python3", "bot.py"]
