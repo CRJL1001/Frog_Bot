@@ -14,7 +14,7 @@ COPY config.py .
 COPY database.py .
 COPY cogs ./cogs
 COPY sounds ./sounds
-COPY data/reminders.json .
+COPY reminders.json .
 
 RUN chown -R botuser:botuser /app
 
