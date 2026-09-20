@@ -12,7 +12,8 @@ COPY cogs ./cogs
 COPY sounds ./sounds
 COPY config.py . 
 
-RUN chown -R botuser:botuser /app
+RUN chown -R botuser:botuser /app: 
+RUN chown -R botuser:botuser /app/data 
 
 USER botuser
 CMD ["python3", "bot.py"]
