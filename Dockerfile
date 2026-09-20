@@ -8,10 +8,9 @@ COPY requirments.txt .
 RUN pip install --no-cache-dir -r requirments.txt
 
 COPY bot.py .
-COPY cogs . 
-COPY sounds . 
+COPY cogs ./cogs 
+COPY sounds ./sounds
 COPY config.py . 
 
 USER botuser
-
 CMD ["python3", "bot.py"]
