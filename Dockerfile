@@ -8,6 +8,7 @@ COPY requirments.txt .
 RUN pip install --no-cache-dir -r requirments.txt
 
 COPY bot.py .
+COPY cogs . 
 
 USER botuser
 
