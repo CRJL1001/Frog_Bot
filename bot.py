@@ -51,7 +51,7 @@ def save_reminders(reminders): #save data in json file
     with open(DATA_FILE, "w", encoding="utf-8") as f: #open data file on write mode
         json.dump(reminders, f, ensure_ascii=False, indent=2) #write into data file 
 
-#call verification-------------------------------
+#tasks verification-------------------------------
 
 @tasks.loop(seconds=30) #repeating every 30 seconds
 async def check_reminders(): #async methode -> verification of time to notify a task
@@ -72,7 +72,17 @@ async def check_reminders(): #async methode -> verification of time to notify a 
             )
             if r.get("assigned_to"): #if assigned to somebody
                 embed.add_field(name="Responsable", value=f"<@{r['assigned_to']}>") #add people field
-            await reminder_channel.send(embed=embed) #sending message and awaiting for success response
+            try:
+                await reminder_channel.send(embed=embed) #sending message and awaiting for success response
+            except discord.Forbidden:
+                print(
+                    f"Permissions insuffisantes dans le salon "
+                    f"{reminder_channel} -> {reminder_channel.id}"
+                )
+                return
+            except discord.HTTPException as error:
+                print(f"Erreur discord lors de l'envoi : {error}")
+                return 
 
             r["next_run"] = compute_next_run(
                 r['weekday'],
