@@ -6,6 +6,8 @@ WORKDIR /app
 
 COPY requirments.txt .
 RUN pip install --no-cache-dir -r requirments.txt
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY bot.py .
 COPY config.py .
