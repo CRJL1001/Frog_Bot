@@ -35,12 +35,18 @@ class Reminders(commands.Cog):
         now = datetime.now() 
         reminder_channel = self.bot.get_channel(REMINDER_CHANNEL_ID) #notification doscord channel
         if reminder_channel is None: #if null return
-            return
+            try:
+                reminder_channel = await self.bot.fetch_channel(REMINDER_CHANNEL_ID)
+            except discord.HTTPException as error:
+                print(f"Impossible de récupérer le salon des rappels : {error}")
+                return
 
         reminders = await get_reminders() #methode to load data
+        print(f"{len(reminders)} rappel(s) chargé(s) depuis PostgreSQL")
         for r in reminders: #for every tasks
             target = r["next_run"] #date of the task to be notified
             if now >= target: #if it's the time to notify
+                print(f"Envoi du rappel #{r['id']} vers le salon {REMINDER_CHANNEL_ID}")
                 embed = discord.Embed( #create a discord message
                     title="Rappel de la tâche !", 
                     description=f"**{r['name']}**\n{r['description'] or ''}", 
@@ -69,6 +75,9 @@ class Reminders(commands.Cog):
                     )
                 )
 
+    @check_reminders.error
+    async def check_reminders_error(self, error):
+        print(f"Erreur dans la boucle des rappels : {error!r}")
     @check_reminders.before_loop #waiting before loop that the bot is ready
     async def before_check_reminders(self):
         await self.bot.wait_until_ready()
@@ -105,15 +114,23 @@ class Reminders(commands.Cog):
             await interaction.response.send_message("Format d'heure invalide, Utilisez HH:MM (ex : 18:30)", ephemeral=True) #discord error message
             return
 
-        await create_reminder(
-            nom,
-            description,
-            responsable.id if responsable else None,
-            jour.value,
-            h,
-            m,
-            compute_next_run(jour.value, h, m),
-        )
+        try:
+            await create_reminder(
+                nom,
+                description,
+                responsable.id if responsable else None,
+                jour.value,
+                h,
+                m,
+                compute_next_run(jour.value, h, m),
+            )
+        except Exception as error:
+            print(f"Erreur lors de l'enregistrement du rappel : {error!r}")
+            await interaction.response.send_message(
+                "Impossible d'enregistrer le rappel dans la base de données.",
+                ephemeral=True,
+            )
+            return
 
         await interaction.response.send_message( #confirmation discord message
             f"Rappel **{nom}** créé: tous les **{jour.name}** à **{heure}**" + (f" pour {responsable.mention}" if responsable else "")
