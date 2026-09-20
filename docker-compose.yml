@@ -7,3 +7,33 @@ services:
       - ./data:/app/data
       - ./cogs:/app/cogs
     restart: unless-stopped
+    depends_on:
+      - postgres:
+        condition: service_healthy
+    networks:
+      - bot-net
+
+  postegres:
+    image: postgres:16-alpine
+    container_name: frog-bot-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER: botuser
+      - POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_DB: frogbot
+    volumes:
+      - pgdata:/var/lib/postegresql/data
+    networks:
+      - bot-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U botuser -d frogbot"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
+
+networks:
+  bot-net:
+    driver: bridge
