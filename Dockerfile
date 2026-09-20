@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirments.txt
 COPY bot.py .
 COPY cogs . 
 COPY sounds . 
+COPY config.py . 
 
 USER botuser
 
