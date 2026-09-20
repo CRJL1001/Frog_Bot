@@ -5,7 +5,7 @@ RUN useradd -m botuser
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirments.txt
 
 COPY bot.py .
 COPY config.py .
