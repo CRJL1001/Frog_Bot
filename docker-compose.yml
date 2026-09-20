@@ -5,6 +5,5 @@ services:
     env_file: .env
     volumes:
       - ./data:/app/data
-      - ./reminders.json:/app/reminders.json
       - ./cogs:/app/cogs
     restart: unless-stopped
