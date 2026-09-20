@@ -15,7 +15,6 @@ COPY cogs ./cogs
 COPY sounds ./sounds
 
 RUN mkdir -p /app/data \
-    && touch /app/data/reminders.json \
     && chown -R botuser:botuser /app
 
 USER botuser
