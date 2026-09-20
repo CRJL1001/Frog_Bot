@@ -5,4 +5,5 @@ services:
     env_file: .env
     volumes:
       - ./data:/app/data
+      - ./cogs:/app/cogs
     restart: unless-stopped
