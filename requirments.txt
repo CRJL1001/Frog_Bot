@@ -1,3 +1,6 @@
 discord.py
 python-dotenv
 apscheduler
+PyNaCl
+pynacl
+discord.py[voice]

@@ -10,12 +10,13 @@ from config import GUILD_ID, COMMAND_PREFIX, TOKEN
 
 
 intents = discord.Intents.default()
+intents.voice_states = True
 
 class FrogBot(commands.Bot): #class of the bot
     async def setup_hook(self):
         guild = discord.Object(id=GUILD_ID)
 
-        for extension in ("cogs.utils", "cogs.tasks"):
+        for extension in ("cogs.utils", "cogs.tasks", "cogs.sound"):
             await self.load_extension(extension)
 
         self.tree.copy_global_to(guild=guild)
