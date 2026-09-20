@@ -16,7 +16,8 @@ CREATE_CHANNEL_ID = int(os.getenv("CREATE_CHANNEL_ID"))
 DAYS=["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 #bot initialisation-------------------
-DATA_FILE= "reminders.json"
+DATA_FILE= "/app/data/reminders.json"
+os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
 
 intents = discord.Intents.default()
 
