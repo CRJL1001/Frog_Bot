@@ -177,9 +177,6 @@ async def ping_tb(interaction: discord.Interaction):
     except discord.HTTPException as error:
         print(f"Erreur serveur: {error}")
 
-
-
-
 @bot.tree.command(
     name="supprimer_rappel",
     description="Supprimer un rappel par son ID"
