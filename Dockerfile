@@ -11,11 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
 
 COPY bot.py .
 COPY config.py .
+COPY database.py .
 COPY cogs ./cogs
 COPY sounds ./sounds
+COPY reminders.json .
 
-RUN mkdir -p /app/data \
-    && chown -R botuser:botuser /app
+RUN chown -R botuser:botuser /app
 
 USER botuser
 

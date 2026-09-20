@@ -4,3 +4,4 @@ apscheduler
 PyNaCl
 pynacl
 discord.py[voice]
+asyncpg

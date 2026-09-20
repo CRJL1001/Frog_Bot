@@ -2,24 +2,18 @@
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-import json 
 from datetime import datetime, timedelta 
-import os
 
 #data handler----------------------------
 
-from config import DATA_FILE, DAYS, REMINDER_CHANNEL_ID
-
-def load_reminders(): #load data from json file
-    if os.path.exists(DATA_FILE): #data file existance verification
-        with open(DATA_FILE, "r", encoding="utf-8") as f: #opening file on read only mode
-            return json.load(f) #load data
-    print("load_reminders OK")
-    return [] #return data
-
-def save_reminders(reminders): #save data in json file
-    with open(DATA_FILE, "w", encoding="utf-8") as f: #open data file on write mode
-        json.dump(reminders, f, ensure_ascii=False, indent=2) #write into data file 
+from config import DAYS, REMINDER_CHANNEL_ID
+from database import (
+    create_reminder,
+    delete_reminder,
+    get_reminders,
+    init_database,
+    update_next_run,
+)
 
 def compute_next_run(weekday, hour, minute): #return date of the next notification + 1 week
     now = datetime.now() 
@@ -43,9 +37,9 @@ class Reminders(commands.Cog):
         if reminder_channel is None: #if null return
             return
 
-        reminders = load_reminders() #methode to load data
+        reminders = await get_reminders() #methode to load data
         for r in reminders: #for every tasks
-            target = datetime.strptime(r["next_run"], "%Y-%m-%d %H:%M") #date of the task to be notified = "next run" field in json object and then format 
+            target = r["next_run"] #date of the task to be notified
             if now >= target: #if it's the time to notify
                 embed = discord.Embed( #create a discord message
                     title="Rappel de la tâche !", 
@@ -66,13 +60,14 @@ class Reminders(commands.Cog):
                     print(f"Erreur discord lors de l'envoi : {error}")
                     return 
 
-                r["next_run"] = compute_next_run(
+                await update_next_run(
+                    r["id"],
+                    compute_next_run(
                     r['weekday'],
                     r["hour"],
                     r['minute']
-                ).strftime("%Y-%m-%d %H:%M")
-
-        save_reminders(reminders) #saving json data
+                    )
+                )
 
     @check_reminders.before_loop #waiting before loop that the bot is ready
     async def before_check_reminders(self):
@@ -110,19 +105,15 @@ class Reminders(commands.Cog):
             await interaction.response.send_message("Format d'heure invalide, Utilisez HH:MM (ex : 18:30)", ephemeral=True) #discord error message
             return
 
-        reminders = load_reminders() #load reminders data
-        new_id = max((r['id'] for r in reminders), default=0) + 1 #search max id in reminders id tab and add 1 to it
-        reminders.append({ #adding to json
-            "id": new_id,
-            "name": nom,
-            "description": description, 
-            "assigned_to": responsable.id if responsable else None,
-            "weekday": jour.value,
-            "hour": h,
-            "minute": m,
-            "next_run": compute_next_run(jour.value, h, m).strftime("%Y-%m-%d %H:%M")
-        })
-        save_reminders(reminders) #saving to file
+        await create_reminder(
+            nom,
+            description,
+            responsable.id if responsable else None,
+            jour.value,
+            h,
+            m,
+            compute_next_run(jour.value, h, m),
+        )
 
         await interaction.response.send_message( #confirmation discord message
             f"Rappel **{nom}** créé: tous les **{jour.name}** à **{heure}**" + (f" pour {responsable.mention}" if responsable else "")
@@ -133,12 +124,12 @@ class Reminders(commands.Cog):
     @app_commands.command(name="liste_rappels", description="Voir les rappels") #command to see the list of reminders
     async def liste_rappels(self, interaction: discord.Interaction): #async methode -> print list of reminders
         print("list index")
-        reminders = load_reminders() #load data from file
+        reminders = await get_reminders() #load data from database
         if not reminders: #if null
             await interaction.response.send_message("Aucun rappel enregistré.", ephemeral=True) #send discord message
             return
         embed = discord.Embed(title="Rappels de tâches", color=discord.Color.blue()) #discord base message
-        for r in sorted(reminders, key=lambda x: x["next_run"]): #for all reminders
+        for r in reminders: #for all reminders
             who = f" - <@{r['assigned_to']}>" if r.get('assigned_to') else "" #assigned person field
             embed.add_field( #adding infos fields
                 name=f"#{r['id']} - {r['name']}",
@@ -159,21 +150,13 @@ class Reminders(commands.Cog):
     ):
         print(f"Suppression demandée : {id}")
 
-        reminders = load_reminders()
-
-        reminders_new = [
-            r for r in reminders
-            if int(r["id"]) != int(id)
-        ]
-
-        if len(reminders_new) == len(reminders):
+        if not await delete_reminder(id):
             await interaction.response.send_message(
                 f"Aucun rappel trouvé avec l'ID #{id}.",
                 ephemeral=True
             )
             return
 
-        save_reminders(reminders_new)
         print(f"Rappel #{id} supprimé")
 
         await interaction.response.send_message(
@@ -184,6 +167,7 @@ class Reminders(commands.Cog):
 
 async def setup(bot: commands.Bot):
     print("setup tasks appelé")
+    await init_database()
     cog = Reminders(bot)
     await bot.add_cog(cog)
     if not cog.check_reminders.is_running():
