@@ -170,6 +170,15 @@ async def liste_rappels(interaction: discord.Interaction): #async methode -> pri
         )
     await interaction.response.send_message(embed=embed) #await for the message to be send in discord
 
+@bot.tree.command(name="ping_tb", description="ping vers Toad Bot")
+async def ping_tb(interaction: discord.Interaction):
+    try:
+        await interaction.response.send_message("Pong", ephemeral=True)
+    except discord.HTTPException as error:
+        print(f"Erreur serveur: {error}")
+
+
+
 
 @bot.tree.command(
     name="supprimer_rappel",
