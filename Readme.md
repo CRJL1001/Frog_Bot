@@ -19,3 +19,7 @@ docker compose up -d --build
 ```
 
 Au premier démarrage, les rappels présents dans `reminders.json` sont importés une seule fois dans PostgreSQL.
+
+## fonctionnement
+
+Ajouter vos fichiers sons dans un dossier sounds créer à la racine
