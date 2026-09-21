@@ -11,5 +11,5 @@ DAYS=["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 DATA_FILE = "reminders.json"
 SOUND_CHANNEL_ID=int(os.getenv("SOUND_CHANNEL_ID"))
 SOUNDS_DIR="./sounds"
-VOCAL_SOUND_DELAY_INTERVAL=[5, 10]
+VOCAL_SOUND_DELAY_INTERVAL=[30, 450]
 SOUNDS_EXTENSIONS=(".mp3", ".wav", ".ogg", ".flac", ".m4a")
