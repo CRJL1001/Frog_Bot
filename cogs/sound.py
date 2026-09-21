@@ -2,13 +2,30 @@ import random
 import asyncio
 import discord
 from discord.ext import commands
+import os
 
-from config import SOUNDS, GUILD_ID, SOUND_CHANNEL_ID, VOCAL_SOUND_DELAY_INTERVAL
+from config import SOUNDS_DIR, GUILD_ID, SOUND_CHANNEL_ID, VOCAL_SOUND_DELAY_INTERVAL, SOUNDS_EXTENSIONS
 
 class Sounds(commands.Cog):
     def __init__(self, bot: commands.Bot ):
         self.bot = bot
         self.sounds_enabled=True
+
+    def get_random_sound(self) -> str | None:
+        try: 
+            files= [
+                f for f in os.listdir(SOUNDS_DIR)
+                if f.lower().endswith(SOUNDS_EXTENSIONS)
+            ]
+        except FileNotFoundError:
+            print(f"Dossier introuvable : {SOUNDS_DIR}")
+            return None
+
+        if not files:
+            print(f"Aucun fichier audio disponible")
+            return None
+
+        return os.path.join(SOUNDS_DIR, random.choice(files))
 
     async def jouer_son(self):
         guild = self.bot.get_guild(GUILD_ID)
@@ -31,9 +48,13 @@ class Sounds(commands.Cog):
 
         await asyncio.sleep(0.2)
 
-        son = random.choice(SOUNDS)
-        source = discord.FFmpegPCMAudio(son)
-        voice_client.play(source)
+        son = self.get_random_sound()
+        if not son: 
+            print("Aucun son à jouer")
+            return
+        print(f"Lecture du son : {son}")
+        source = discord.FFmpegPCMAudio(son, options="-vn")
+        voice_client.play(source, after=lambda error: print(f"Erreur de lecture : {error}") if error else None)
 
         while voice_client.is_playing():
             await asyncio.sleep(1)

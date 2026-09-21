@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Europe/Paris
+ENV PYTHONUNBUFFERED=1
 
 COPY bot.py .
 COPY config.py .

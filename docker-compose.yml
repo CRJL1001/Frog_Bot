@@ -11,6 +11,8 @@ services:
         condition: service_healthy
     networks:
       - bot-net
+    volumes:
+      - ./sounds:/app/sounds
 
   postgres:
     image: postgres:16-alpine
@@ -32,6 +34,7 @@ services:
 
 volumes:
   pgdata:
+  sounds:
 
 networks:
   bot-net:
