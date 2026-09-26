@@ -99,9 +99,9 @@ class Twitch(commands.Cog):
 
     #Commandes discord
 
-    @app_commands.command(name="addstream")
+    @app_commands.command(name="ajouter_streamer")
     @app_commands.default_permissions(manage_guild=True)
-    async def add_stream(self, interaction: discord.Interaction, login: str):
+    async def ajouter_streamer(self, interaction: discord.Interaction, login: str):
         """Ajoute un streamer"""
         login = login.lower().strip()
 
@@ -125,17 +125,17 @@ class Twitch(commands.Cog):
         await add_streamer(login)
         await interaction.response.send_message(f"{login} ajouté", ephemeral=True) #discord error message
 
-    @app_commands.command(name="removestream")
+    @app_commands.command(name="supprimer_streamer")
     @app_commands.default_permissions(manage_guild=True)
-    async def remove_stream(self, interaction: discord.Interaction, login: str):
+    async def supprimer_streamer(self, interaction: discord.Interaction, login: str):
         """Retire un streamer"""
         if await remove_streamer(login.lower().strip()):
             await interaction.response.send_message(f"streamer **{login}** retiré !", ephemeral=True) #discord error message
         else:
             await interaction.response.send_message(f"streamer {login} non suivi !", ephemeral=True) #discord error message
 
-    @app_commands.command(name="liststreams")
-    async def list_streams(self, interaction: discord.Interaction):
+    @app_commands.command(name="liste_streamers")
+    async def liste_streamers(self, interaction: discord.Interaction):
         """Liste les streamers surveillés"""
         rows = await get_streamers()
         if not rows:
