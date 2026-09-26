@@ -14,5 +14,5 @@ SOUNDS_DIR="./sounds"
 VOCAL_SOUND_DELAY_INTERVAL=[30, 450]
 SOUNDS_EXTENSIONS=(".mp3", ".wav", ".ogg", ".flac", ".m4a")
 TWITCH_SECRET=os.getenv("TWITCH_SECRET")
-TWITCH_ID=int(os.getenv("TWITCH_ID"))
+TWITCH_ID=os.getenv("TWITCH_ID")
 TWITCH_CHANNEL=int(os.getenv("TWITCH_CHANNEL"))

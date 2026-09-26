@@ -1,13 +1,20 @@
 import discord
 from discord.ext import commands, tasks
+from discord import app_commands
 import aiohttp
+
+from database import(
+    add_streamer,
+    remove_streamer,
+    get_streamers,
+)
 
 from config import TWITCH_ID, TWITCH_SECRET, TWITCH_CHANNEL
 
 class Twitch(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.live_en_cours = set()
+        self.lives_en_cours = set()
         self.twitch_token = None
         self.check_streams.start()
 
@@ -34,7 +41,7 @@ class Twitch(commands.Cog):
             "Client-ID": TWITCH_ID,
             "Authorization": f"Bearer {self.twitch_token}",
         }
-        params = "&".join(f"user_login={1}" for login in logins)
+        params = "&".join(f"user_login={login}" for login in logins)
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://api.twitch.tv/helix/streams?{params}",
@@ -50,7 +57,7 @@ class Twitch(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def check_streams(self):
-        rows = await self.get_streams()
+        rows = await get_streamers()
         if not rows:
             return
         if not self.twitch_token:
@@ -92,9 +99,9 @@ class Twitch(commands.Cog):
 
     #Commandes discord
 
-    @commands.command(name="addstream")
-    @commands.has_permissions(manage_guild=True)
-    async def add_stream(self, ctx, login: str):
+    @app_commands.command(name="addstream")
+    @app_commands.default_permissions(manage_guild=True)
+    async def add_stream(self, interaction: discord.Interaction, login: str):
         """Ajoute un streamer"""
         login = login.lower().strip()
 
@@ -112,33 +119,33 @@ class Twitch(commands.Cog):
                 data = await resp.json()
 
         if not data.get("data"):
-            await ctx.send(f"Le streamer **{login}** n'existe pas sur Twitch.")
+            await interaction.response.send_message(f"le streamer {login} n'existe pas", ephemeral=True) #discord error message
             return
 
-        await self.add_streamer(login)
-        await ctx.send(f"**{login}** ajouté(e).")
+        await add_streamer(login)
+        await interaction.response.send_message(f"{login} ajouté", ephemeral=True) #discord error message
 
-    @commands.command(name="removestream")
-    @commands.has_permissions(manage_guild=True)
-    async def remove_stream(self, ctx, login: str):
+    @app_commands.command(name="removestream")
+    @app_commands.default_permissions(manage_guild=True)
+    async def remove_stream(self, interaction: discord.Interaction, login: str):
         """Retire un streamer"""
-        if await self.remove_streamer(login.lower().strip()):
-            await ctx.send(f"**{login}** retiré(e)")
+        if await remove_streamer(login.lower().strip()):
+            await interaction.response.send_message(f"streamer **{login}** retiré !", ephemeral=True) #discord error message
         else:
-            await ctx.send(f"**{login}** n'est pas suivi(e)")
+            await interaction.response.send_message(f"streamer {login} non suivi !", ephemeral=True) #discord error message
 
-    @commands.command(name="liststreams")
-    async def list_streams(self,ctx):
+    @app_commands.command(name="liststreams")
+    async def list_streams(self, interaction: discord.Interaction):
         """Liste les streamers surveillés"""
-        rows = await self.get_streamers()
+        rows = await get_streamers()
         if not rows:
-            await ctx.send("Aucun streamers trouvés")
+            await interaction.response.send_message("Aucun streamers trouvés", ephemeral=True) #discord error message
             return
-        liste = '\n'.join(
-            f"-[{r["twitch_login"]}](https://twitch.tv/{r["twitch_login"]})"
+        liste = "\n".join(
+            f"- [{r['twitch_login']}](https://twitch.tv/{r['twitch_login']})"
             for r in rows
         )
-        await ctx.send(f"**Streamers surveillés :**\n{liste}")
+        await interaction.response.send_message(f"**Streamers surveillés :**\n{liste}", ephemeral=True) #discord error
 
 async def setup(bot):
     await bot.add_cog(Twitch(bot))
