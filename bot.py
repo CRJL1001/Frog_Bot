@@ -16,7 +16,7 @@ class FrogBot(commands.Bot): #class of the bot
     async def setup_hook(self):
         guild = discord.Object(id=GUILD_ID)
 
-        for extension in ("cogs.utils", "cogs.tasks", "cogs.sound"):
+        for extension in ("cogs.utils", "cogs.tasks", "cogs.sound", "cogs.twitch"):
             await self.load_extension(extension)
 
         self.tree.copy_global_to(guild=guild)

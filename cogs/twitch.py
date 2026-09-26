@@ -90,6 +90,58 @@ class Twitch(commands.Cog):
     async def before_check(self):
         await self.bot.wait_until_ready()
 
+    #Commandes discord
+
+    @commands.command(name="addstream")
+    @commands.has_permissions(manage_guild=True)
+    async def add_stream(self, ctx, login: str):
+        """Ajoute un streamer"""
+        login = login.lower().strip()
+
+        if not self.twitch_token:
+            await self.get_token()
+        headers = {
+            "Client-ID": TWITCH_ID,
+            "Authorization": f"Bearer {self.twitch_token}",
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"https://api.twitch.tv/helix/users?login={login}",
+                headers=headers,
+            ) as resp:
+                data = await resp.json()
+
+        if not data.get("data"):
+            await ctx.send(f"Le streamer **{login}** n'existe pas sur Twitch.")
+            return
+
+        await self.add_streamer(login)
+        await ctx.send(f"**{login}** ajouté(e).")
+
+    @commands.command(name="removestream")
+    @commands.has_permissions(manage_guild=True)
+    async def remove_stream(self, ctx, login: str):
+        """Retire un streamer"""
+        if await self.remove_streamer(login.lower().strip()):
+            await ctx.send(f"**{login}** retiré(e)")
+        else:
+            await ctx.send(f"**{login}** n'est pas suivi(e)")
+
+    @commands.command(name="liststreams")
+    async def list_streams(self,ctx):
+        """Liste les streamers surveillés"""
+        rows = await self.get_streamers()
+        if not rows:
+            await ctx.send("Aucun streamers trouvés")
+            return
+        liste = '\n'.join(
+            f"-[{r["twitch_login"]}](https://twitch.tv/{r["twitch_login"]})"
+            for r in rows
+        )
+        await ctx.send(f"**Streamers surveillés :**\n{liste}")
+
+async def setup(bot):
+    await bot.add_cog(Twitch(bot))
 
 
 

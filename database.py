@@ -162,7 +162,7 @@ async def remove_streamer(twitch_login) -> bool :
     )
     return result == "DELETE 1"
 
-async def get_streamer():
+async def get_streamers():
     return await pool.fetch(
         "SELECT * FROM streamers"
     )
