@@ -43,6 +43,16 @@ async def init_database():
         )
         """
     )
+
+    await pool.execute(
+        """
+        CREATE TABLE IF NOT EXISTS streamers (
+            id SERIAL PRIMARY KEY,
+            twitch_login TEXT NOT NULL,
+            UNIQUE(twitch_login)
+        );
+        """
+    )
     await pool.execute(
         """
         CREATE TABLE IF NOT EXISTS migrations (
@@ -135,3 +145,24 @@ async def update_next_run(reminder_id, next_run):
 async def delete_reminder(reminder_id):
     result = await pool.execute("DELETE FROM reminders WHERE id = $1", reminder_id)
     return result == "DELETE 1"
+
+##----STREAMER
+async def add_streamer(twitch_login):
+    await pool.execute(
+        """
+        INSERT INTO streamers (twitch_login) VALUES ($1)
+        """,
+        twitch_login,
+    )
+
+async def remove_streamer(twitch_login) -> bool :
+    result = await pool.execute(
+        "DELETE FROM streamers WHERE twitch_login = $1",
+        twitch_login,
+    )
+    return result == "DELETE 1"
+
+async def get_streamer():
+    return await pool.fetch(
+        "SELECT * FROM streamers"
+    )
