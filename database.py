@@ -1,10 +1,9 @@
+from datetime import datetime
+from config import DATA_FILE
 import json
 import os
-from datetime import datetime
-
 import asyncpg
 
-from config import DATA_FILE
 
 
 pool: asyncpg.Pool | None = None
@@ -57,6 +56,52 @@ async def init_database():
         """
         CREATE TABLE IF NOT EXISTS migrations (
             name TEXT PRIMARY KEY
+        )
+        """
+    )
+    await pool.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ingredients (
+            id_ingredient SERIAL PRIMARY KEY,
+            name TEXT NOT NULL
+        )
+        """
+    )
+    await pool.execute(
+        """
+        CREATE TABLE IF NOT EXISTS recipies(
+            id_recipie SERIAL PRIMARY KEY,
+            name TEXT NOT NULL
+        )
+        """
+    )
+    await pool.execute(
+        """
+        CREATE TABLE IF NOT EXISTS menus(
+            id_menu SERIAL PRIMARY KEY,
+            date_ DATE NOT NULL DEFAULT CURRENT_DATE
+        )
+        """
+    )
+    await pool.execute(
+        """
+        CREATE TABLE IF NOT EXISTS include_ingredients(
+            id_ingredient INT NOT NULL,
+            id_recipie INT NOT NULL,
+            PRIMARY KEY (id_ingredient, id_recipie),
+            FOREIGN KEY (id_ingredient) REFERENCES ingredients(id_ingredient),
+            FOREIGN KEY (id_recipie) REFERENCES recipies(id_recipie)
+        )
+        """
+    )
+    await pool.execute(
+        """
+        CREATE TABLE IF NOT EXISTS include_recipies(
+            id_menu INT NOT NULL,
+            id_recipie INT NOT NULL,
+            PRIMARY KEY (id_menu, id_recipie),
+            FOREIGN KEY (id_menu) REFERENCES menus(id_menu),
+            FOREIGN KEY (id_recipie) REFERENCES recipies(id_recipie)
         )
         """
     )
