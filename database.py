@@ -235,8 +235,8 @@ async def add_recipie(name) -> bool:
 # ajouter menu -> retour d'indice + recette
 
 async def add_menu() -> int:
-    await pool.fetchrow(
-        "INSERT INTO menus (date_) VALUES CURRENT_DATE REUTRNING id_menu",
+    row = await pool.fetchrow(
+        "INSERT INTO menus (date_) VALUES (CURRENT_DATE) RETURNING id_menu",
     )
     return row['id_menu']
 

@@ -22,6 +22,8 @@ class Menu(commands.Cog):
         self.bot=bot
 
 
+    #---------------------ingrédients
+
     @app_commands.command(name="ajouter_ingredient", description="Ajouter un ingrédient dans la cuisine")
     @app_commands.describe(
         nom="Nom de l'ingrédient"
@@ -56,6 +58,77 @@ class Menu(commands.Cog):
                 inline=False
             )
         await interaction.response.send_message(embed=embed)
+
+    #--------------------recettes
+
+    @app_commands.command(name="ajouter_recette", description="Ajouter une recette dans la cuisine")
+    @app_commands.describe(
+        nom="Nom de la recette"
+    )
+    async def ajouter_recette(self, interaction: discord.Interaction, nom: str):
+        try:
+            await add_recipie(nom)
+        except Exception as error:
+            print(f"Erreur lors de l'ajout de la recette : {error!r}")
+            await interaction.response.send_message(
+                "Impossible d'ajouter la recette dans la cuisine ou déjà présent",
+                ephemeral=True
+            )
+            return
+
+        await interaction.response.send_message(
+            f"Recette **{nom}** ajouté dans la cuisine !"
+        )
+
+    @app_commands.command(name="liste_recettes", description="Lister les recettes de la cuisine")
+    async def liste_recettes(self, interaction: discord.Interaction):
+        recettes = await get_recipies()
+        if not recettes:
+            await interaction.response.send_message("Aucune recette enregistrée", ephemeral=True)
+            return
+        embed = discord.Embed(title="Recette de la cuisine", color=discord.Color.yellow())
+        for i in recettes:
+            embed.add_field(
+                name=f"#{i['id_recipie']}",
+                value=f"{i['name']}",
+                inline=False
+            )
+        await interaction.response.send_message(embed=embed)
+
+    #--------------------menus
+
+    @app_commands.command(name="ajouter_menu", description="Ajouter un menu dans la cuisine")
+    async def ajouter_menu(self, interaction: discord.Interaction):
+        try:
+            i = await add_menu()
+        except Exception as error:
+            print(f"Erreur lors de l'ajout du menu : {error!r}")
+            await interaction.response.send_message(
+                "Impossible d'ajouter le menu dans la cuisine",
+                ephemeral=True
+            )
+            return
+
+        await interaction.response.send_message(
+            f"Menu **{i}** ajouté dans la cuisine !"
+        )
+
+    @app_commands.command(name="liste_menu", description="Lister les menus de la cuisine")
+    async def liste_menus(self, interaction: discord.Interaction):
+        menus = await get_menus()
+        if not menus:
+            await interaction.response.send_message("Aucun menu enregistré", ephemeral=True)
+            return
+        embed = discord.Embed(title="Menu de la cuisine", color=discord.Color.blue())
+        for i in menus:
+            embed.add_field(
+                name=f" menu n° #{i['id_menu']}",
+                value=f" créer le {i['date_']}",
+                inline=False
+            )
+        await interaction.response.send_message(embed=embed)
+
+
 
 
 
