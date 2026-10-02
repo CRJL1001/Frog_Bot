@@ -218,7 +218,7 @@ async def get_streamers():
 
 async def add_ingredient(name) -> bool :
     await pool.execute(
-        "INSERT INTO ingredients (name) VALUES $1",
+        "INSERT INTO ingredients (name) VALUES ($1)",
         name,
     )
     return True
@@ -227,7 +227,7 @@ async def add_ingredient(name) -> bool :
 
 async def add_recipie(name) -> bool:
     await pool.execute(
-        "INSERT INTO recipies (name) VALUES $1",
+        "INSERT INTO recipies (name) VALUES ($1)",
         name,
     )
     return True

@@ -16,7 +16,7 @@ class FrogBot(commands.Bot): #class of the bot
     async def setup_hook(self):
         guild = discord.Object(id=GUILD_ID)
 
-        for extension in ("cogs.utils", "cogs.tasks", "cogs.sound", "cogs.twitch"):
+        for extension in ("cogs.utils", "cogs.tasks", "cogs.sound", "cogs.twitch", "cogs.menu"):
             await self.load_extension(extension)
 
         self.tree.copy_global_to(guild=guild)
@@ -41,9 +41,4 @@ async def on_ready():# async methode -> connecting bot
     print(f"Connecté en tant que {bot.user}") #connected logs
 
 
-bot.run(TOKEN) #running the bot 
-
-
-
-
-
+bot.run(TOKEN) #running the bot
