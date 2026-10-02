@@ -211,3 +211,81 @@ async def get_streamers():
     return await pool.fetch(
         "SELECT * FROM streamers"
     )
+
+##--------MENU
+
+# ajouter ingrédient -> nom
+
+async def add_ingredient(name) -> bool :
+    await pool.execute(
+        "INSERT INTO ingredients (name) VALUES $1",
+        name,
+    )
+    return True
+
+# ajouter recette -> nom
+
+async def add_recipie(name) -> bool:
+    await pool.execute(
+        "INSERT INTO recipies (name) VALUES $1",
+        name,
+    )
+    return True
+
+# ajouter menu -> retour d'indice + recette
+
+async def add_menu() -> int:
+    await pool.fetchrow(
+        "INSERT INTO menus (date_) VALUES CURRENT_DATE REUTRNING id_menu",
+    )
+    return row['id_menu']
+
+#ajouter un ingrédient à une recette
+
+async def add_ingredient_to_recipie(ingredient, recipie) -> bool:
+    await pool.execute(
+        """
+        INSERT INTO include_ingredients (id_ingredient, id_recipie) VALUES (
+            (SELECT id_ingredient FROM ingredients WHERE name LIKE $1),
+            (SELECT id_recipie FROM recipies WHERE name LIKE $2)
+        )
+        ON CONFLICT DO NOTHING;
+        """,
+        ingredient, recipie
+    )
+    return True
+
+#ajouter recette à un menu
+
+async def add_recipie_to_menu(id_menu, recipie) -> bool:
+    await pool.execute(
+        """
+        INSERT INTO include_recipies (id_recipie, id_menu) VALUES (
+            (SELECT id_recipie FROM recipies WHERE name LIKE $1),
+            $2
+        )
+        ON CONFLICT DO NOTHING;
+        """,
+        recipie, id_menu
+    )
+
+#liste des ingrédients
+
+async def get_ingredients():
+    return await pool.fetch(
+        "SELECT * FROM ingredients"
+    )
+
+#liste des recettes
+
+async def get_recipies():
+    return await pool.fetch(
+        "SELECT * FROM recipies"
+    )
+
+#liste des menus
+
+async def get_menus():
+    return await pool.fetch(
+        "SELECT * FROM menus"
+    )
