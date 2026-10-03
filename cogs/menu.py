@@ -17,7 +17,8 @@ from database import (
     init_database,
     get_recipie,
     debug_tables,
-    get_menu
+    get_menu,
+    get_menu_ingredients
 )
 
 class Menu(commands.Cog):
@@ -229,6 +230,41 @@ class Menu(commands.Cog):
                     value=f"{i['count']}",
                     inline=True
                 )
+            await interaction.response.send_message(embed=embed)
+
+        except Exception as error:
+            print(f"Impossible d'afficher le menu  #{id} : {error!r}")
+            await interaction.response.send_message(
+                "Impossible d'afficher le menu",
+                ephemeral=True
+            )
+
+    @app_commands.command(name="afficher_ingredients_menu", description="Affiche un menu avec ses ingrédients")
+    @app_commands.describe(
+        id="Id du menu"
+    )
+    async def afficher_ingredients_menu(self, interaction: discord.Interaction, id: int):
+        try:
+            menu = await get_menu_ingredients(id)
+            if not menu:
+                await interaction.response.send_message(
+                    "Impossible d'afficher le menu",
+                    ephemeral=True
+                )
+                return
+
+            embed = discord.Embed(title=f"Ingrédient du menu #{id} du {menu[0]['date_'].strftime('%d/%m/%Y')}", color=discord.Color.purple())
+            for i in menu:
+                embed.add_field(
+                    name=f"{i['name']}",
+                    value=f"{i['total']}",
+                    inline=True
+                )
+            embed.add_field(
+                name="Ne pas Oublier !",
+                value="Eau, sopalin, dessert, gouter, etc !",
+                inline=False
+            )
             await interaction.response.send_message(embed=embed)
 
         except Exception as error:

@@ -342,3 +342,21 @@ async def get_menu(id: int):
         """,
         id
     )
+
+#afficher ingrédients d'un menu
+
+
+async def get_menu_ingredients(id: int):
+    return await pool.fetch(
+        """
+        SELECT i.name, SUM(ii.count * ir.count) AS total, m.date_
+        FROM ingredients i
+        JOIN include_ingredients ii ON i.id_ingredient = ii.id_ingredient
+        JOIN include_recipies ir ON ii.id_recipie = ir.id_recipie
+        JOIN menus m ON ir.id_menu = m.id_menu
+        WHERE m.id_menu = $1
+        GROUP BY i.name, m.date_
+        ORDER BY total DESC
+        """,
+        id
+    )
