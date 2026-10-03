@@ -88,23 +88,35 @@ async def init_database():
         CREATE TABLE IF NOT EXISTS include_ingredients(
             id_ingredient INT NOT NULL,
             id_recipie INT NOT NULL,
+            count INT NOT NULL DEFAULT 1,
             PRIMARY KEY (id_ingredient, id_recipie),
             FOREIGN KEY (id_ingredient) REFERENCES ingredients(id_ingredient),
             FOREIGN KEY (id_recipie) REFERENCES recipies(id_recipie)
         )
         """
     )
+
+    await pool.execute(
+        "ALTER TABLE include_ingredients ADD COLUMN IF NOT EXISTS count INT NOT NULL DEFAULT 1"
+    )
+
     await pool.execute(
         """
         CREATE TABLE IF NOT EXISTS include_recipies(
             id_menu INT NOT NULL,
             id_recipie INT NOT NULL,
+            count INT NOT NULL DEFAULT 1,
             PRIMARY KEY (id_menu, id_recipie),
             FOREIGN KEY (id_menu) REFERENCES menus(id_menu),
             FOREIGN KEY (id_recipie) REFERENCES recipies(id_recipie)
         )
         """
     )
+
+    await pool.execute(
+        "ALTER TABLE include_recipies ADD COLUMN IF NOT EXISTS count INT NOT NULL DEFAULT 1"
+    )
+
     await migrate_json_reminders()
 
 
@@ -242,32 +254,46 @@ async def add_menu() -> int:
 
 #ajouter un ingrédient à une recette
 
-async def add_ingredient_to_recipie(ingredient, recipie) -> bool:
+async def add_ingredient_to_recipie(count: int, ingredient: str, recipie: str) -> bool:
+    print(f"DEBUGGGGG = {ingredient}, {recipie}")
     await pool.execute(
         """
-        INSERT INTO include_ingredients (id_ingredient, id_recipie) VALUES (
+        INSERT INTO include_ingredients (id_ingredient, id_recipie, count) VALUES (
             (SELECT id_ingredient FROM ingredients WHERE name LIKE $1),
-            (SELECT id_recipie FROM recipies WHERE name LIKE $2)
+            (SELECT id_recipie FROM recipies WHERE name LIKE $2),
+            $3
         )
         ON CONFLICT DO NOTHING;
         """,
-        ingredient, recipie
+        ingredient, recipie, count
     )
     return True
 
+async def debug_tables():
+    ings = await pool.fetch("SELECT id_ingredient, name FROM ingredients")
+    recs = await pool.fetch("SELECT id_recipie, name FROM recipies")
+    print("--- INGREDIENTS ---")
+    for r in ings:
+        print(r['id_ingredient'], repr(r['name']))
+    print("--- RECETTES ---")
+    for r in recs:
+        print(r['id_recipie'], repr(r['name']))
+
 #ajouter recette à un menu
 
-async def add_recipie_to_menu(id_menu, recipie) -> bool:
+async def add_recipie_to_menu(count: int, id_menu, recipie) -> bool:
     await pool.execute(
         """
-        INSERT INTO include_recipies (id_recipie, id_menu) VALUES (
+        INSERT INTO include_recipies (id_recipie, id_menu, count) VALUES (
             (SELECT id_recipie FROM recipies WHERE name LIKE $1),
-            $2
+            $2,
+            $3
         )
         ON CONFLICT DO NOTHING;
         """,
-        recipie, id_menu
+        recipie, id_menu, count
     )
+    return True
 
 #liste des ingrédients
 
@@ -288,4 +314,18 @@ async def get_recipies():
 async def get_menus():
     return await pool.fetch(
         "SELECT * FROM menus"
+    )
+
+#afficher une recette
+
+async def get_recipie(name: str):
+    return await pool.fetch(
+        """
+        SELECT i.name, ii.count
+        FROM ingredients i
+        JOIN include_ingredients ii ON i.id_ingredient = ii.id_ingredient
+        JOIN recipies r ON ii.id_recipie = r.id_recipie
+        WHERE r.name LIKE $1
+        """,
+        name
     )

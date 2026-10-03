@@ -14,7 +14,9 @@ from database import (
     get_ingredients,
     get_menus,
     get_recipies,
-    init_database
+    init_database,
+    get_recipie,
+    debug_tables
 )
 
 class Menu(commands.Cog):
@@ -86,7 +88,7 @@ class Menu(commands.Cog):
         if not recettes:
             await interaction.response.send_message("Aucune recette enregistrée", ephemeral=True)
             return
-        embed = discord.Embed(title="Recette de la cuisine", color=discord.Color.yellow())
+        embed = discord.Embed(title="Recettes de la cuisine", color=discord.Color.yellow())
         for i in recettes:
             embed.add_field(
                 name=f"#{i['id_recipie']}",
@@ -94,6 +96,61 @@ class Menu(commands.Cog):
                 inline=False
             )
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="ajouter_ingredient_recette", description="Ajouter une quantité d'ingrédient dans une recette")
+    @app_commands.describe(
+        nom_recette="Nom de la recette",
+        nom_ingredient="Nom de l'ingrédient",
+        count="quantité de l'ingrédient dans la recette"
+    )
+    async def ajouter_ingredient_recette(self, interaction: discord.Interaction, nom_recette: str, nom_ingredient: str, count: int):
+        try:
+            await add_ingredient_to_recipie(count, nom_ingredient, nom_recette)
+        except Exception as error:
+            print(f"Impossible d'ajouter l'ingrédient {nom_ingredient} dans {nom_recette} : {error!r}")
+            await interaction.response.send_message(
+                "Impossible d'ajouter l'ingrédient dans la recette",
+                ephemeral=True
+            )
+            return
+        await interaction.response.send_message(
+            f"Ingrédient **{nom_ingredient}** ajouté dans la recette : **{nom_recette}** !"
+        )
+
+
+
+    @app_commands.command(name="afficher_recette", description="Affiche une recette avec ses ingrédients")
+    @app_commands.describe(
+        nom="Nom de la recette"
+    )
+    async def afficher_recette(self, interaction: discord.Interaction, nom: str):
+        try:
+            recette = await get_recipie(nom)
+            if not recette:
+                await interaction.response.send_message(
+                    "Impossible d'afficher la recette",
+                    ephemeral=True
+                )
+                return
+
+            embed = discord.Embed(title=f"Recette {nom} :", color=discord.Color.pink())
+            for i in recette:
+                embed.add_field(
+                    name=f"{i['name']}",
+                    value=f"{i['count']}",
+                    inline=True
+                )
+            await interaction.response.send_message(embed=embed)
+
+        except Exception as error:
+            print(f"Impossible d'afficher la recette {nom} : {error!r}")
+            await interaction.response.send_message(
+                "Impossible d'afficher la recette",
+                ephemeral=True
+            )
+
+
+
 
     #--------------------menus
 
