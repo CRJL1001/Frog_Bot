@@ -255,7 +255,6 @@ async def add_menu() -> int:
 #ajouter un ingrédient à une recette
 
 async def add_ingredient_to_recipie(count: int, ingredient: str, recipie: str) -> bool:
-    print(f"DEBUGGGGG = {ingredient}, {recipie}")
     await pool.execute(
         """
         INSERT INTO include_ingredients (id_ingredient, id_recipie, count) VALUES (
@@ -281,7 +280,7 @@ async def debug_tables():
 
 #ajouter recette à un menu
 
-async def add_recipie_to_menu(count: int, id_menu, recipie) -> bool:
+async def add_recipie_to_menu(count: int, id_menu: int, recipie: str) -> bool:
     await pool.execute(
         """
         INSERT INTO include_recipies (id_recipie, id_menu, count) VALUES (
@@ -328,4 +327,18 @@ async def get_recipie(name: str):
         WHERE r.name LIKE $1
         """,
         name
+    )
+
+#afficher un menu
+
+async def get_menu(id: int):
+    return await pool.fetch(
+        """
+        SELECT m.date_, r.name, ir.count
+        FROM recipies r
+        JOIN include_recipies ir ON r.id_recipie = ir.id_recipie
+        JOIN menus m ON m.id_menu = ir.id_menu
+        WHERE m.id_menu = $1
+        """,
+        id
     )

@@ -16,7 +16,8 @@ from database import (
     get_recipies,
     init_database,
     get_recipie,
-    debug_tables
+    debug_tables,
+    get_menu
 )
 
 class Menu(commands.Cog):
@@ -184,6 +185,59 @@ class Menu(commands.Cog):
                 inline=False
             )
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="ajouter_recette_menu", description="Ajouter une recette dans un menu")
+    @app_commands.describe(
+        nom_recette="Nom de la recette",
+        menu="Id du menu",
+        count="quantité de la recette dans le menu"
+    )
+    async def ajouter_recette_menu(self, interaction: discord.Interaction, nom_recette: str, menu: int, count: int):
+        try:
+            await add_recipie_to_menu(count, menu, nom_recette)
+        except Exception as error:
+            print(f"Impossible d'ajouter la recette {nom_recette} dans le menu #{menu} : {error!r}")
+            await interaction.response.send_message(
+                "Impossible d'ajouter la recette dans le menu",
+                ephemeral=True
+            )
+            return
+        await interaction.response.send_message(
+            f"Recette **{nom_recette}** ajouté dans le menu : **#{menu}** !"
+        )
+
+
+
+    @app_commands.command(name="afficher_menu", description="Affiche un menu avec ses recettes")
+    @app_commands.describe(
+        id="Id du menu"
+    )
+    async def afficher_menu(self, interaction: discord.Interaction, id: int):
+        try:
+            menu = await get_menu(id)
+            if not menu:
+                await interaction.response.send_message(
+                    "Impossible d'afficher le menu",
+                    ephemeral=True
+                )
+                return
+
+            embed = discord.Embed(title=f"Menu #{id} du {menu[0]['date_'].strftime("%d/%m/%Y")}", color=discord.Color.red())
+            for i in menu:
+                embed.add_field(
+                    name=f"{i['name']}",
+                    value=f"{i['count']}",
+                    inline=True
+                )
+            await interaction.response.send_message(embed=embed)
+
+        except Exception as error:
+            print(f"Impossible d'afficher le menu  #{id} : {error!r}")
+            await interaction.response.send_message(
+                "Impossible d'afficher le menu",
+                ephemeral=True
+            )
+
 
 
 
