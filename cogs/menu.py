@@ -33,15 +33,23 @@ class Menu(commands.Cog):
         nom="Nom de l'ingrédient"
     )
     async def ajouter_ingredient(self, interaction: discord.Interaction, nom: str):
-        try:
-            await add_ingredient(nom)
-        except Exception as error:
-            print(f"Erreur lors de l'ajout de l'ingrédient : {error!r}")
-            await interaction.response.send_message(
-                "Impossible d'ajouter l'ingrédient dans la cuisine ou déjà présent",
-                ephemeral=True
-            )
+        ingredients = [name.strip() for name in nom.split(",")]
+
+        if any(not name for name in ingredients):
+            await interaction.response.send_message(" Chaque ingrédient doit avoir un nom", ephemeral=True)
             return
+
+        await interaction.response.defer()
+        added, failed = [], []
+
+        for name in ingredients:
+            try:
+                await add_ingredient(name)
+                added.append(name)
+            except Exception as error:
+                print(f"Erreur lors de l'ajout de l'ingrédient : {error!r}")
+                failed.append(name)
+                return
 
         await interaction.response.send_message(
             f"Ingrédient **{nom}** ajouté dans la cuisine !"
