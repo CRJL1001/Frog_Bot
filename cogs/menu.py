@@ -191,8 +191,10 @@ class Menu(commands.Cog):
 
         if any(not name for name in ingredients):
             await interaction.response.send_message("Chaque ingrédients doit avoir un nom", ephemeral=True)
+            return
         elif any(not quant for quant in counts):
             await interaction.response.send_message("Chaque ingrédients doit avoir une quantitée", ephemeral=True)
+            return
 
         size = len(ingredients)
         if size != len(counts):
@@ -200,7 +202,7 @@ class Menu(commands.Cog):
 
         added = []
 
-        for i in range(0, size-1):
+        for i in range(size):
             try:
                 await add_ingredient_to_recipie(int(counts[i]), ingredients[i], nom_recette)
                 added.append(f"{counts[i]} - {ingredients[i]}")
@@ -228,6 +230,7 @@ class Menu(commands.Cog):
 
         if any(not name for name in ingredients):
             await interaction.response.send_message("Chaque ingrédients doit avoir un nom", ephemeral=True)
+            return
 
         removed = []
 
@@ -452,6 +455,11 @@ class Menu(commands.Cog):
             embed.add_field(
                 name="Ne pas Oublier !",
                 value="Eau, sopalin, dessert, gouter, etc !",
+                inline=False
+            )
+            embed.add_field(
+                name="Lien vers le drive",
+                value="https://www.leclercdrive.fr/",
                 inline=False
             )
             await interaction.response.send_message(embed=embed)
