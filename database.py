@@ -286,6 +286,22 @@ async def add_ingredient_to_recipie(count: int, ingredient: str, recipie: str) -
     )
     return True
 
+#Supprimer des ingrédients d'une recette
+
+async def remove_ingredient_from_recipie(ingredient: str, recipie: str) -> bool:
+    await pool.execute(
+        """
+        DELETE FROM include_ingredients
+        USING ingredients, recipies
+        WHERE include_ingredients.id_ingredient = ingredients.id_ingredient
+            AND include_ingredients.id_recipie = recipies.id_recipie
+            AND ingredients.name = $1
+            AND recipies.name = $2;
+        """,
+        ingredient, recipie
+    )
+    return True
+
 async def debug_tables():
     ings = await pool.fetch("SELECT id_ingredient, name FROM ingredients")
     recs = await pool.fetch("SELECT id_recipie, name FROM recipies")
@@ -309,6 +325,21 @@ async def add_recipie_to_menu(count: int, id_menu: int, recipie: str) -> bool:
         ON CONFLICT DO NOTHING;
         """,
         recipie, id_menu, count
+    )
+    return True
+
+#Supprimer des recettes d'un menu
+
+async def remove_recipie_from_menu(recipie: str, id_menu: int) -> bool:
+    await pool.execute(
+        """
+        DELETE FROM include_recipies
+        USING recipies
+        WHERE include_recipies.id_recipie = recipies.id_recipie
+            AND recipies.name = $1
+            AND include_recipies.id_menu = $2;
+        """,
+        recipie, id_menu
     )
     return True
 

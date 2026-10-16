@@ -19,7 +19,9 @@ from database import (
     get_recipie,
     debug_tables,
     get_menu,
-    get_menu_ingredients, remove_ingredient
+    get_menu_ingredients, remove_ingredient,
+    remove_ingredient_from_recipie,
+    remove_recipie_from_menu
 )
 
 class Menu(commands.Cog):
@@ -215,6 +217,38 @@ class Menu(commands.Cog):
 
         await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(name="supprimer_ingredient_recette", description="supprimer un ingrédient d'une recette")
+    @app_commands.describe(
+        nom_recette="Nom de la recette",
+        nom_ingredient="Nom de l'ingrédient",
+    )
+    async def supprimer_ingredient_recette(self, interaction: discord.Interaction, nom_recette: str,
+                                         nom_ingredient: str):
+        ingredients = [ing.strip() for ing in nom_ingredient.split(",")]
+
+        if any(not name for name in ingredients):
+            await interaction.response.send_message("Chaque ingrédients doit avoir un nom", ephemeral=True)
+
+        removed = []
+
+        for ing in ingredients:
+            try:
+                await remove_ingredient_from_recipie(ing, nom_recette)
+                removed.append(ing)
+            except Exception as error:
+                print(f"ingrédient {ing} non supprimé : {error!r}")
+
+        embed = discord.Embed(title=f"Ingrédients supprimé de la recette {nom_recette} ",
+                              color=discord.Color.red())
+        for i in removed:
+            embed.add_field(
+                name=i,
+                value="",
+                inline=True
+            )
+
+        await interaction.response.send_message(embed=embed)
+
 
 
     @app_commands.command(name="afficher_recette", description="Affiche une recette avec ses ingrédients")
@@ -331,6 +365,38 @@ class Menu(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
 
+
+    @app_commands.command(name="supprimer_recette_menu", description="Supprimer des recettes d'un menu")
+    @app_commands.describe(
+        nom_recette="Noms des recettes séparés par des virgules",
+        menu="Id du menu",
+    )
+    async def supprimer_recette_menu(self, interaction: discord.Interaction, nom_recette: str, menu: int):
+        recettes = [rec.strip() for rec in nom_recette.split(",")]
+
+        if any(not name for name in recettes):
+            await interaction.response.send_message("Chaque recette doit avoir un nom", ephemeral=True)
+            return
+
+        removed = []
+
+        for rec in recettes:
+            try:
+                await remove_recipie_from_menu(rec, menu)
+                removed.append(rec)
+            except Exception as error:
+                print(f"Recette {rec} non supprimée : {error!r}")
+
+        embed = discord.Embed(title=f"Recettes supprimées du menu #{menu}",
+                              color=discord.Color.red())
+        for i in removed:
+            embed.add_field(
+                name=i,
+                value="",
+                inline=True
+            )
+
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="afficher_menu", description="Affiche un menu avec ses recettes")
     @app_commands.describe(
