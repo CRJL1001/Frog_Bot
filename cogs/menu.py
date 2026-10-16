@@ -127,7 +127,7 @@ class Menu(commands.Cog):
         embed = discord.Embed(title="Recettes ajoutées dans la cuisine", color=discord.Color.yellow())
         for i in added:
             embed.add_field(
-                name=i,
+                name=f"{i}",
                 value="",
                 inline=True
             )
@@ -183,19 +183,37 @@ class Menu(commands.Cog):
         nom_ingredient="Nom de l'ingrédient",
         count="quantité de l'ingrédient dans la recette"
     )
-    async def ajouter_ingredient_recette(self, interaction: discord.Interaction, nom_recette: str, nom_ingredient: str, count: int):
-        try:
-            await add_ingredient_to_recipie(count, nom_ingredient, nom_recette)
-        except Exception as error:
-            print(f"Impossible d'ajouter l'ingrédient {nom_ingredient} dans {nom_recette} : {error!r}")
-            await interaction.response.send_message(
-                "Impossible d'ajouter l'ingrédient dans la recette",
-                ephemeral=True
+    async def ajouter_ingredient_recette(self, interaction: discord.Interaction, nom_recette: str, nom_ingredient: str, count: str):
+        ingredients = [ing.strip() for ing in nom_ingredient.split(",")]
+        counts = [ co.strip() for co in count.split(",")]
+
+        if any(not name for name in ingredients):
+            await interaction.response.send_message("Chaque ingrédients doit avoir un nom", ephemeral=True)
+        elif any(not quant for quant in counts):
+            await interaction.response.send_message("Chaque ingrédients doit avoir une quantitée", ephemeral=True)
+
+        size = len(ingredients)
+        if size != len(counts):
+            await interaction.response.send_message("il doit y avoir une qauntité pour chaque ingrédients", ephemeral=True)
+
+        added = []
+
+        for i in range(0, size-1):
+            try:
+                await add_ingredient_to_recipie(int(counts[i]), ingredients[i], nom_recette)
+                added.append(f"{counts[i]} - {ingredients[i]}")
+            except Exception as error:
+                print(f"erreur lors de l'ajout de {ingredients[i]} : {error!r}")
+
+        embed = discord.Embed(title=f"Ingrédients ajoutés à la recette {nom_recette} ", color=discord.Color.yellow())
+        for i in added:
+            embed.add_field(
+                name=i,
+                value="",
+                inline=True
             )
-            return
-        await interaction.response.send_message(
-            f"Ingrédient **{nom_ingredient}** ajouté dans la recette : **{nom_recette}** !"
-        )
+
+        await interaction.response.send_message(embed=embed)
 
 
 
