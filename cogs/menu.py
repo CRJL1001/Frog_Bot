@@ -39,8 +39,7 @@ class Menu(commands.Cog):
             await interaction.response.send_message(" Chaque ingrédient doit avoir un nom", ephemeral=True)
             return
 
-        await interaction.response.defer()
-        added, failed = [], []
+        added = []
 
         for name in ingredients:
             try:
@@ -48,13 +47,15 @@ class Menu(commands.Cog):
                 added.append(name)
             except Exception as error:
                 print(f"Erreur lors de l'ajout de l'ingrédient : {error!r}")
-                failed.append(name)
-                return
 
-        await interaction.response.send_message(
-            f"Ingrédient **{nom}** ajouté dans la cuisine !"
-        )
-
+        embed = discord.Embed(title="Ingrédients ajoutés dans la cuisine", color=discord.Color.yellow())
+        for i in added:
+            embed.add_field(
+                name=i,
+                value="",
+                inline=True
+            )
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="liste_ingredients", description="Lister les ingrédients de la cuisine")
     async def liste_ingredients(self, interaction: discord.Interaction):
