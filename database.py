@@ -235,6 +235,15 @@ async def add_ingredient(name) -> bool :
     )
     return True
 
+#--------supprimer ingrédient -> nom
+
+async def remove_ingredient(name) -> bool :
+    await pool.execute(
+        "DELETE FROM ingredients WHERE name = $1",
+        name
+    )
+    return True
+
 # ajouter recette -> nom
 
 async def add_recipie(name) -> bool:

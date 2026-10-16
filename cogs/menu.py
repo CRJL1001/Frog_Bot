@@ -18,7 +18,7 @@ from database import (
     get_recipie,
     debug_tables,
     get_menu,
-    get_menu_ingredients
+    get_menu_ingredients, remove_ingredient
 )
 
 class Menu(commands.Cog):
@@ -30,7 +30,7 @@ class Menu(commands.Cog):
 
     @app_commands.command(name="ajouter_ingredient", description="Ajouter un ingrédient dans la cuisine")
     @app_commands.describe(
-        nom="Nom de l'ingrédient"
+        nom="Nom de l'ingrédient, xx, xx, xx"
     )
     async def ajouter_ingredient(self, interaction: discord.Interaction, nom: str):
         ingredients = [name.strip() for name in nom.split(",")]
@@ -50,6 +50,35 @@ class Menu(commands.Cog):
 
         embed = discord.Embed(title="Ingrédients ajoutés dans la cuisine", color=discord.Color.yellow())
         for i in added:
+            embed.add_field(
+                name=i,
+                value="",
+                inline=True
+            )
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="supprimer_ingredient", description="Supprimer un ingrédient de la cuisine")
+    @app_commands.describe(
+        nom="Nom de l'ingrédient, xx, xx"
+    )
+    async def supprimer_ingredient(self, interaction: discord.Interaction, nom: str):
+        ingredients = [name.strip() for name in nom.split(",")]
+
+        if any(not name for name in ingredients):
+            await interaction.response.send_message(" Chaque ingrédient doit avoir un nom", ephemeral=True)
+            return
+
+        deleted = []
+
+        for name in ingredients:
+            try:
+                await remove_ingredient(name)
+                deleted.append(name)
+            except Exception as error:
+                print(f"Erreur lors de la suppression de l'ingrédient : {error!r}")
+
+        embed = discord.Embed(title="Ingrédients supprimés de la cuisine", color=discord.Color.yellow())
+        for i in deleted:
             embed.add_field(
                 name=i,
                 value="",
