@@ -253,6 +253,15 @@ async def add_recipie(name) -> bool:
     )
     return True
 
+# supprimer recette -> nom
+
+async def remove_recipie(name) -> bool:
+    await pool.execute(
+        "DELETE FROM recipies WHERE name = $1",
+        name,
+    )
+    return True
+
 # ajouter menu -> retour d'indice + recette
 
 async def add_menu() -> int:
