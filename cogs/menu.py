@@ -285,23 +285,50 @@ class Menu(commands.Cog):
 
     @app_commands.command(name="ajouter_recette_menu", description="Ajouter une recette dans un menu")
     @app_commands.describe(
-        nom_recette="Nom de la recette",
+        nom_recette="Noms des recettes séparés par des virgules",
         menu="Id du menu",
-        count="quantité de la recette dans le menu"
+        count="Quantités séparées par des virgules, dans le même ordre que les recettes"
     )
-    async def ajouter_recette_menu(self, interaction: discord.Interaction, nom_recette: str, menu: int, count: int):
+    async def ajouter_recette_menu(self, interaction: discord.Interaction, nom_recette: str, menu: int, count: str):
+        recettes = [name.strip() for name in nom_recette.split(",")]
+        counts = [quant.strip() for quant in count.split(",")]
+
+        if any(not name for name in recettes):
+            await interaction.response.send_message("Chaque recette doit avoir un nom", ephemeral=True)
+            return
+        if any(not quant for quant in counts):
+            await interaction.response.send_message("Chaque recette doit avoir une quantité", ephemeral=True)
+            return
+        if len(recettes) != len(counts):
+            await interaction.response.send_message("Il doit y avoir une quantité pour chaque recette", ephemeral=True)
+            return
+
         try:
-            await add_recipie_to_menu(count, menu, nom_recette)
-        except Exception as error:
-            print(f"Impossible d'ajouter la recette {nom_recette} dans le menu #{menu} : {error!r}")
+            counts = [int(quant) for quant in counts]
+        except ValueError:
             await interaction.response.send_message(
-                "Impossible d'ajouter la recette dans le menu",
+                "Chaque quantité doit être un nombre entier",
                 ephemeral=True
             )
             return
-        await interaction.response.send_message(
-            f"Recette **{nom_recette}** ajouté dans le menu : **#{menu}** !"
-        )
+
+        added = []
+
+        for recette, quant in zip(recettes, counts):
+            try:
+                await add_recipie_to_menu(quant, menu, recette)
+                added.append(f"{quant} - {recette}")
+            except Exception as error:
+                print(f"Impossible d'ajouter la recette {recette} dans le menu #{menu} : {error!r}")
+
+        embed = discord.Embed(title=f"Recettes ajoutées au menu #{menu}", color=discord.Color.yellow())
+        for i in added:
+            embed.add_field(
+                name=i,
+                value="",
+                inline=True
+            )
+        await interaction.response.send_message(embed=embed)
 
 
 
