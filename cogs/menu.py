@@ -436,37 +436,52 @@ class Menu(commands.Cog):
         id="Id du menu"
     )
     async def afficher_ingredients_menu(self, interaction: discord.Interaction, id: int):
+        await interaction.response.defer()
         try:
             menu = await get_menu_ingredients(id)
             if not menu:
-                await interaction.response.send_message(
+                await interaction.followup.send(
                     "Impossible d'afficher le menu",
                     ephemeral=True
                 )
                 return
 
-            embed = discord.Embed(title=f"Ingrédient du menu #{id} du {menu[0]['date_'].strftime('%d/%m/%Y')}", color=discord.Color.purple())
-            for i in menu:
-                embed.add_field(
-                    name=f"{i['name']}",
-                    value=f"{i['total']}",
-                    inline=True
+            description = "\n".join(f"• {i['name']} : {i['total']}" for i in menu)
+            pages = []
+            while description:
+                end = len(description)
+                if end > 4000:
+                    end = description.rfind("\n", 0, 4001)
+                    if end <= 0:
+                        end = 4000
+                pages.append(description[:end])
+                description = description[end:]
+                if description.startswith("\n"):
+                    description = description[1:]
+
+            for page, content in enumerate(pages, start=1):
+                embed = discord.Embed(
+                    title=f"Ingrédients du menu #{id} du {menu[0]['date_'].strftime('%d/%m/%Y')}",
+                    description=content,
+                    color=discord.Color.purple()
                 )
-            embed.add_field(
-                name="Ne pas Oublier !",
-                value="Eau, sopalin, dessert, gouter, etc !",
-                inline=False
-            )
-            embed.add_field(
-                name="Lien vers le drive",
-                value="https://www.leclercdrive.fr/",
-                inline=False
-            )
-            await interaction.response.send_message(embed=embed)
+                embed.set_footer(text=f"Page {page}/{len(pages)}")
+                if page == len(pages):
+                    embed.add_field(
+                        name="Ne pas Oublier !",
+                        value="Eau, sopalin, dessert, gouter, etc !",
+                        inline=False
+                    )
+                    embed.add_field(
+                        name="Lien vers le drive",
+                        value="https://www.leclercdrive.fr/",
+                        inline=False
+                    )
+                await interaction.followup.send(embed=embed)
 
         except Exception as error:
             print(f"Impossible d'afficher le menu  #{id} : {error!r}")
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "Impossible d'afficher le menu",
                 ephemeral=True
             )

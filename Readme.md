@@ -17,9 +17,20 @@ Puis démarrez les services avec :
 ```bash
 docker compose up -d --build
 ```
-
 Au premier démarrage, les rappels présents dans `reminders.json` sont importés une seule fois dans PostgreSQL.
 
-## fonctionnement
+## Premier lancement
 
-Ajouter vos fichiers sons dans un dossier sounds créé à la racine
+A la racine créer les fichiers :
+- reminders.json avec 
+```reminders.json
+[]
+```
+- le répertoire /sounds avec vos sons aléatoire (au moins 1)
+
+Puis copier le .env.exemple en .env
+
+```command
+cp .env.exemple .env
+```
+
