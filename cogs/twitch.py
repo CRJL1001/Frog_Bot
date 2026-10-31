@@ -67,6 +67,7 @@ class Twitch(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def check_streams(self):
+        print("Streams checked")
         rows = await get_streamers()
         if not rows:
             return
