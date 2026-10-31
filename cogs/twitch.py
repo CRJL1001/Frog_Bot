@@ -24,17 +24,22 @@ class Twitch(commands.Cog):
     #TWITCH API
 
     async def get_token(self):
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://id.twitch.tv/oauth2/token",
-                params={
-                    "client_id": TWITCH_ID,
-                    "client_secret": TWITCH_SECRET,
-                    "grant_type": "client_credentials",
-                },
-            ) as resp:
-                data = await resp.json()
-                self.twitch_token = data["access_token"]
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    "https://id.twitch.tv/oauth2/token",
+                    params={
+                        "client_id": TWITCH_ID,
+                        "client_secret": TWITCH_SECRET,
+                        "grant_type": "client_credentials",
+                    },
+                ) as resp:
+                    resp.raise_for_status()
+                    data = await resp.json()
+                    self.twitch_token = data["access_token"]
+        except (aiohttp.ClientError, TimeoutError, ValueError, KeyError, TypeError):
+            self.twitch_token = None
+            print("Erreur lors de la récupération du token Twitch")
 
     async def get_streams(self, logins):
         headers = {
@@ -42,16 +47,21 @@ class Twitch(commands.Cog):
             "Authorization": f"Bearer {self.twitch_token}",
         }
         params = "&".join(f"user_login={login}" for login in logins)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://api.twitch.tv/helix/streams?{params}",
-                headers=headers,
-            ) as resp:
-                if resp.status == 401:
-                    await self.get_token()
-                    return None
-                data = await resp.json()
-                return {s["user_login"]: s for s in data["data"]}
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"https://api.twitch.tv/helix/streams?{params}",
+                    headers=headers,
+                ) as resp:
+                    if resp.status == 401:
+                        await self.get_token()
+                        return None
+                    resp.raise_for_status()
+                    data = await resp.json()
+                    return {s["user_login"]: s for s in data["data"]}
+        except (aiohttp.ClientError, TimeoutError, ValueError, KeyError, TypeError):
+            print("Erreur lors de la récupération des streams Twitch")
+            return None
 
     #boucle de verif
 
@@ -62,13 +72,12 @@ class Twitch(commands.Cog):
             return
         if not self.twitch_token:
             await self.get_token()
+            if not self.twitch_token:
+                return
 
         logins = [row["twitch_login"] for row in rows]
 
-        try:
-            streams = await self.get_streams(logins)
-        except Exception:
-            print("Erreur lors de l'interrogation de la bdd streamers")
+        streams = await self.get_streams(logins)
 
         if streams is None:
             return
@@ -112,16 +121,28 @@ class Twitch(commands.Cog):
 
         if not self.twitch_token:
             await self.get_token()
+            if not self.twitch_token:
+                await interaction.response.send_message(
+                    "Erreur lors de l'authentification Twitch", ephemeral=True
+                )
+                return
         headers = {
             "Client-ID": TWITCH_ID,
             "Authorization": f"Bearer {self.twitch_token}",
         }
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://api.twitch.tv/helix/users?login={login}",
-                headers=headers,
-            ) as resp:
-                data = await resp.json()
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"https://api.twitch.tv/helix/users?login={login}",
+                    headers=headers,
+                ) as resp:
+                    resp.raise_for_status()
+                    data = await resp.json()
+        except (aiohttp.ClientError, TimeoutError, ValueError):
+            await interaction.response.send_message(
+                "Erreur lors de la récupération du streamer Twitch", ephemeral=True
+            )
+            return
 
         if not data.get("data"):
             await interaction.response.send_message(f"le streamer {login} n'existe pas", ephemeral=True) #discord error message
