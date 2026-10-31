@@ -64,7 +64,12 @@ class Twitch(commands.Cog):
             await self.get_token()
 
         logins = [row["twitch_login"] for row in rows]
-        streams = await self.get_streams(logins)
+
+        try:
+            streams = await self.get_streams(logins)
+        except Exception:
+            print("Erreur lors de l'interrogation de la bdd streamers")
+
         if streams is None:
             return
 
